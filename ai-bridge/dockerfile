@@ -1,0 +1,22 @@
+FROM python:3.9-slim
+
+WORKDIR /app
+
+# 安装依赖
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# 复制通过代码
+COPY . .
+
+# 暴露端口
+EXPOSE 5000
+
+# 👇 新增这一行！强制 Python 实时打印日志，不要缓冲
+ENV PYTHONUNBUFFERED=1
+
+# 【关键修改】
+# 1. -k gthread: 改用多线程模式，极其稳定，不会莫名崩溃
+# 2. --threads 10: 允许同时处理 10 个请求
+# 3. --timeout 300: 保持 5 分钟超时耐心
+CMD ["gunicorn", "-k", "gthread", "--threads", "10", "-w", "1", "-b", "0.0.0.0:5000", "--timeout", "300", "app:app"]

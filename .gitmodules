@@ -1,0 +1,3 @@
+[submodule "rsshub"]
+	path = rsshub
+	url = git@github.com:DanielGao511/RSSHub.git

@@ -1,0 +1,9 @@
+flask
+openai
+feedparser
+redis
+requests
+python-dotenv
+gunicorn
+
+# google-genai

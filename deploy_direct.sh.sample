@@ -1,0 +1,42 @@
+#!/bin/bash
+
+# ================= 配置区 =================
+SERVER_IP="在这里填入你的服务器 IP"
+SERVER_USER="root"
+TARGET_DIR="/root/rss-deploy"
+# =========================================
+
+echo "🚀 [1/5] 开始本地构建 (强制 Linux 架构)..."
+
+# 1. 构建 RSSHub
+docker build --platform linux/amd64 -t custom-rsshub:latest ./rsshub
+
+# 2. 构建 AI-Bridge
+docker build --platform linux/amd64 -t custom-ai-bridge:latest ./ai-bridge
+
+echo "📦 [2/5] 正在打包镜像 (这可能需要几秒钟)..."
+# 只打包这两个自定义镜像，Bot 和 Redis 让服务器自己拉取，节省上传流量
+docker save -o deploy_images.tar custom-rsshub:latest custom-ai-bridge:latest
+
+echo "📡 [3/5] 正在上传文件到服务器 ($SERVER_IP)..."
+# 创建远程目录
+ssh $SERVER_USER@$SERVER_IP "mkdir -p $TARGET_DIR"
+# 上传: 镜像包 + 配置文件 + 环境变量
+scp deploy_images.tar docker-compose.prod.yml .env $SERVER_USER@$SERVER_IP:$TARGET_DIR/
+
+echo "🔧 [4/5] 正在服务器上解包并部署..."
+ssh $SERVER_USER@$SERVER_IP "
+  cd $TARGET_DIR && \
+  mv docker-compose.prod.yml docker-compose.yml && \
+  echo '正在导入镜像...' && \
+  docker load -i deploy_images.tar && \
+  echo '正在启动服务...' && \
+  docker compose up -d && \
+  echo '清理临时文件...' && \
+  rm deploy_images.tar
+"
+
+echo "🧹 [5/5] 清理本地临时文件..."
+rm deploy_images.tar
+
+echo "🎉 部署成功！所有服务已在线上运行。"

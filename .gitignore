@@ -1,0 +1,15 @@
+
+.env
+*.sh
+*.yml
+
+
+bot_data/
+redis_data/
+rss_data/
+
+
+__pycache__/
+*.pyc
+.DS_Store
+.vscode/

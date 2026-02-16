@@ -1,0 +1,51 @@
+services:
+  # 1. RSSHub (自定义源码版)
+  rsshub:
+    image: custom-rsshub:latest 
+    restart: always
+    ports:
+      - "1200:1200"
+    environment:
+      NODE_ENV: production
+      CACHE_TYPE: redis
+      REDIS_URL: "redis://redis:6379/"
+      CACHE_EXPIRE: 300
+    depends_on:
+      - redis
+
+  # 2. AI Bridge (自研代码版)
+  ai-bridge:
+    image: custom-ai-bridge:latest 
+    restart: always
+    environment:
+      ALIYUN_API_KEY: ${ALIYUN_API_KEY}
+      ALIYUN_BASE_URL: ${ALIYUN_BASE_URL}
+      MODEL_NAME: ${MODEL_NAME}
+      REDIS_HOST: redis
+    depends_on:
+      - redis
+
+  # 3. Bot (官方版，服务器自己下载)
+  bot:
+    image: rongronggg9/rss-to-telegram:latest
+    restart: always
+    volumes:
+      - ./bot_data:/app/config
+    environment:
+      TOKEN: ${TG_BOT_TOKEN}
+      MANAGER: ${MANAGER}
+      API_ID: ${API_ID}
+      API_HASH: ${API_HASH}
+      TELEGRAPH_TOKEN: ${TELEGRAPH_TOKEN}
+      RSSHUB_HOST: 'rsshub:1200'
+      ALLOW_SELF_SIGNED_CERTIFICATES: 'true'
+      HTTP_TIMEOUT: 300
+    depends_on:
+      - ai-bridge
+
+  # 4. Redis (官方版，服务器自己下载)
+  redis:
+    image: redis:alpine
+    restart: always
+    volumes:
+      - ./redis_data:/data
