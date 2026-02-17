@@ -1,3 +1,7 @@
 [submodule "rsshub"]
 	path = rsshub
 	url = git@github.com:DanielGao511/RSSHub.git
+[submodule "bot"]
+	path = bot
+	url = git@github.com:DanielGao511/RSS-to-Telegram-Bot.git
+	branch = master

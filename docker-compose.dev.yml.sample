@@ -47,9 +47,9 @@ services:
       RSSHUB_HOST: 'rsshub:1200' 
       HTTP_TIMEOUT: 300
       NO_PROXY: "ai-bridge,rsshub,127.0.0.1,localhost"
-      R_PROXY: "http://IPV4:7890"
-      HTTP_PROXY: "http://IPV4:7890"
-      HTTPS_PROXY: "http://IPV4:7890"
+      R_PROXY: "http://host.docker.internal:7890"
+      HTTP_PROXY: "http://host.docker.internal:7890"
+      HTTPS_PROXY: "http://host.docker.internal:7890"
     depends_on:
       - ai-bridge
 
