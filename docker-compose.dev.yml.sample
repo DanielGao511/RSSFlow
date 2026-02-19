@@ -1,5 +1,12 @@
 services:
-  # 1. RSSHub (保持不变)
+  # browserless:
+  #     image: browserless/chrome:latest
+  #     restart: always
+  #     ports:
+  #       - "3000:3000"
+  #     environment:
+  #       - MAX_CONCURRENT_SESSIONS=5 # 防止并发过高撑爆内存
+ 
   rsshub:
     build: 
       context: ./rsshub
@@ -10,15 +17,11 @@ services:
       NODE_ENV: dev
       CACHE_TYPE: redis
       REDIS_URL: "redis://redis:6379/"
-      CACHE_EXPIRE: 120 # 缓存过期时间，单位秒，生产环境可以适当调长
-      # === 推特(X) 配置预留区 ===
-      # 如果未来要抓推特，把下面两行前面的 # 去掉，填入你的 Cookie
-      # TWITTER_AUTH_TOKEN: '这里填你的auth_token'
-      # TWITTER_CT0: '这里填你的ct0'
+      CACHE_EXPIRE: 120 # 设置缓存时间2分钟，生产环境可以适当调长
+      # PUPPETEER_WS_ENDPOINT: "ws://browserless:3000?stealth=true" # 连接到 browserless 服务
     depends_on:
       - redis
-
-  # 2. AI Bridge 
+ 
   ai-bridge:
     build: 
       context: ./ai-bridge
@@ -28,13 +31,14 @@ services:
     environment:
       ALIYUN_API_KEY: ${ALIYUN_API_KEY}
       ALIYUN_BASE_URL: ${ALIYUN_BASE_URL}
+      MODEL_NAME: ${MODEL_NAME}
       REDIS_HOST: redis
     depends_on:
       - redis
 
-  # 3. bot
   bot:
-    image: rongronggg9/rss-to-telegram:latest
+    build: 
+      context: ./bot
     volumes:
       - ./bot_data:/app/config
     restart: always
@@ -44,16 +48,12 @@ services:
       API_ID: ${API_ID}
       API_HASH: ${API_HASH}
       TELEGRAPH_TOKEN: ${TELEGRAPH_TOKEN}
-      RSSHUB_HOST: 'rsshub:1200' 
       HTTP_TIMEOUT: 300
-      NO_PROXY: "ai-bridge,rsshub,127.0.0.1,localhost"
-      R_PROXY: "http://host.docker.internal:7890"
-      HTTP_PROXY: "http://host.docker.internal:7890"
-      HTTPS_PROXY: "http://host.docker.internal:7890"
+      T_PROXY: "socks5://x.x.x.x:xxxx"
+      # R_PROXY: "socks5://x.x.x.x:xxxx"
     depends_on:
       - ai-bridge
 
-  # 4. Redis (保持不变)
   redis:
     image: redis:alpine
     volumes:

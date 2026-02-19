@@ -37,8 +37,6 @@ services:
       API_ID: ${API_ID}
       API_HASH: ${API_HASH}
       TELEGRAPH_TOKEN: ${TELEGRAPH_TOKEN}
-      RSSHUB_HOST: 'rsshub:1200'
-      ALLOW_SELF_SIGNED_CERTIFICATES: 'true'
       HTTP_TIMEOUT: 300
     depends_on:
       - ai-bridge

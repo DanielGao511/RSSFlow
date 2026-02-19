@@ -196,6 +196,7 @@ def proxy_feed():
     except Exception as e:
         return f"Error fetching feed: {str(e)}", 500
 
+    # target_entries = feed.entries[:5]  # 只处理前5条，避免过载
     target_entries = feed.entries
     if not target_entries:
         return Response(generate_xml([], feed), mimetype="application/xml")
