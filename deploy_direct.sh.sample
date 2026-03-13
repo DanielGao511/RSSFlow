@@ -1,0 +1,46 @@
+#!/bin/bash
+
+# ================= 配置区 =================
+SERVER_IP="在这里填入你的服务器 IP"
+SERVER_USER="root"
+TARGET_DIR="/root/rss-deploy"
+# =========================================
+
+echo "🚀 [1/5] 开始本地构建 (强制 Linux 架构)..."
+
+# 1. 构建 RSSHub
+docker build --platform linux/amd64 -t custom-rsshub:latest ./rsshub
+
+# 2. 构建整合 AI 总结功能的 Bot
+docker build --platform linux/amd64 -t custom-bot:latest ./bot
+
+echo "📦 [2/5] 正在打包镜像 (这可能需要几秒钟)..."
+# 打包镜像
+docker save -o deploy_images.tar custom-rsshub:latest custom-bot:latest
+
+echo "📡 [3/5] 正在上传配置文件和镜像 ($SERVER_IP)..."
+ssh $SERVER_USER@$SERVER_IP "mkdir -p $TARGET_DIR"
+
+# 仅上传配置和镜像，不上传本地数据库
+scp deploy_images.tar docker-compose.yml .env $SERVER_USER@$SERVER_IP:$TARGET_DIR/
+
+echo "🔧 [4/5] 正在服务器上解包并部署 (平滑无感更新)..."
+ssh $SERVER_USER@$SERVER_IP "
+  cd $TARGET_DIR && \
+  [ -f docker-compose.yml ] && cp docker-compose.yml docker-compose.yml.bak
+  
+  echo '正在导入新镜像...' && \
+  docker load -i deploy_images.tar && \
+  
+  echo '正在重启服务...' && \
+  docker compose up -d --remove-orphans && \
+  
+  echo '清理临时包...' && \
+  rm deploy_images.tar && \
+  echo '🎉 线上服务已更新！'
+"
+
+echo "🧹 [5/5] 清理本地临时文件..."
+rm deploy_images.tar
+
+echo "✅ 部署流程全部完成！"

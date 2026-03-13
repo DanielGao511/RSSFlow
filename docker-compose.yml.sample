@@ -1,0 +1,50 @@
+services:
+  # 1. RSSHub (Node.js 较吃内存，限制 512M)
+  rsshub:
+    build: ./rsshub
+    restart: always
+    ports:
+      - "1200:1200"
+    environment:
+      NODE_ENV: production
+      CACHE_TYPE: redis
+      REDIS_URL: "redis://redis:6379/"
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    depends_on:
+      - redis
+
+  # 2. Bot (已集成 AI 总结功能)
+  bot:
+    build: ./bot
+    restart: always
+    volumes:
+      - ./bot_data:/app/config
+    environment:
+      TOKEN: ${TG_BOT_TOKEN}
+      MANAGER: ${MANAGER}
+      API_ID: ${API_ID}
+      API_HASH: ${API_HASH}
+      TELEGRAPH_TOKEN: ${TELEGRAPH_TOKEN}
+      ALIYUN_API_KEY: ${ALIYUN_API_KEY}
+      ALIYUN_BASE_URL: ${ALIYUN_BASE_URL}
+      MODEL_NAME: ${MODEL_NAME}
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    depends_on:
+      - redis
+
+  # 3. Redis (轻量级，限制 64M)
+  redis:
+    image: redis:alpine
+    restart: always
+    volumes:
+      - ./redis_data:/data
+    deploy:
+      resources:
+        limits:
+          memory: 64M
